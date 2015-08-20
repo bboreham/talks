@@ -1,0 +1,134 @@
+State management without consensus
+11 Sept 2015
+Tags: golang, state, consensus
+
+Bryan Boreham
+Software Engineer, Weaveworks
+bryan@weave.works
+http://weave.works
+@bboreham
+
+* Who am I?
+
+Software Engineer at Weaveworks
+
+.image ./weave-logo@2x.png
+
+* What do Weaveworks do?
+
+- Connect, observe and control Docker containers
+- All written in Go, all Open Source
+
+* What am I talking about?
+
+.image ./paxos.jpg
+.caption "Making the world a better place through Paxos Algorithms"
+
+* No, really!
+
+- Suppose you don't want your system to go offline when one component fails.
+- This leads you to run multiple instances, so one can take over when another fails.
+- So now you need to replicate your state in multiple places.
+- And you need to worry about these instances getting out of sync.
+
+* Distributed data management is easy, right?
+
+.image data-management.jpg
+
+* How can we avoid state getting out of sync?
+
+- Only store it in one place
+- Only allow updates in one place, and replicate them
+- Make the nodes come to a consensus over updates
+- Something else?
+
+* The cost of consensus
+
+*Performance*: _n_ network round-trips per update.
+
+*Availability*: updates halt if you cannot contact a majority of nodes
+
+"Network partition is indistinguishable from node failure"
+
+* How did Weaveworks come to this realisation?
+
+We have a couple of use-cases where we need things to be consistent
+but we also want the rest of the system to remain available when nodes
+go down or become disconnected.
+
+- IP address allocation
+- DNS
+
+We allocate an IP address to each container, and these addresses have
+to be unique across the whole network.
+
+We expect developers to have network hosts that come and go -
+e.g. when you close your laptop and head to the cofee house.
+
+* Solution: Convergent Replicated Data Type (CRDT)
+
+# subset of Conflict-Free Replicated Data Type
+
+- maintains consistency without consensus
+- each local update is _monotonic_
+- nodes _merge_ updates from other nodes
+- merge function must be commutative, associative and idempotent
+
+* CRDT applied to DNS
+
+- Data structure is a set of entries mapping `Name` to `Address`.
+- Operations are: `Add` and `Delete`
+- `Delete` is implemented by erecting a _tombstone_ over an entry
+
+Entries also contain the host and container ID, so multiple hosts can
+have an entry for the same name, adding redundancy to the system. This
+then allows round-robin DNS for load-spreading.
+
+Putting the host ID into the entry means that there is no problem of
+consistency between updates on different hosts - they only ever
+manipulate their own entries.
+
+How do we keep from accumulating an ever-increasing set of tombstoned entries?
+
+- Tombstoned entries time out after a while
+
+Each update sends a broadcast out to other nodes. These messages can get dropped by the network, so there is a periodic gossip mechanism to catch up.
+
+* CRDT applied to IP allocation
+
+- Data structure is a ring, mapping IP address segments to hosts
+- Operations are: `Allocate`, `Free`, `Request Space` and `Claim`
+
+Each host only ever manipulates its own entries. When one host wants
+to grant some free space to another host, it simply updates one of its
+own entries to point to the other host, and broadcasts an update.
+
+* Sidebar: Broadcast and Gossip
+
+- CRDT systems often use _Gossip_ mechanisms to communicate updates.
+- Meaning that each node periodically tells some random selection of other nodes what it knows.
+- Bandwidth usage can be controlled no matter what size your network is.
+
+Weave is intended to work in awkward topologies, e.g. two
+well-connected sets with narrow links between the two sets.
+
+- Weave understands the topology of its interconnects.
+- Weave's gossip implementation skews the random selection of nodes to optimise flow over the topology
+
+* Conclusion
+- CRDT can be used to make your distributed system faster and more available
+- Data structure has to be carefully designed to meet the requirements of a CRDT
+
+* Further reading
+
+Conflict-free replicated data types
+Marc Shapiro, Nuno Preguiça, Carlos Baquero, Marek Zawirski, 2011
+[[http://dl.acm.org/citation.cfm?id=2050642]]
+
+CRDTs: Consistency without concurrency control
+Mihai Letia, Nuno Preguiça, Marc Shapiro, 2009
+[[http://arxiv.org/abs/0907.0929]]
+
+* Credits
+
+"TechCrunch Disrupt" image from HBO's "Silicon Valley"
