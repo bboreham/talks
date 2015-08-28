@@ -1,4 +1,4 @@
-State management without consensus
+Distributed state management without consensus
 11 Sept 2015
 Tags: golang, state, consensus
 
@@ -12,31 +12,50 @@ http://weave.works
 
 Software Engineer at Weaveworks
 
-.image ./weave-logo@2x.png
+.image ./weave_logo.png
 
 * What do Weaveworks do?
-
 - Connect, observe and control Docker containers
+- Weave Net: distributed ethernet switch, DNS and IP allocator
+- Weave Scope: distributed container visualisation
 - All written in Go, all Open Source
 
-* What am I talking about?
+# We need things to be consistent but we also want the rest of the
+# system to remain available when nodes go down or become
+# disconnected.  And we don't want the overhad of installing a store
+# like Etcd or Postgres
 
+* What am I talking about?
 .image ./paxos.jpg
 .caption "Making the world a better place through Paxos Algorithms"
 
 * No, really!
-
-- Suppose you don't want your system to go offline when one component fails.
+- You don't want your system to go offline when one component fails.
 - This leads you to run multiple instances, so one can take over when another fails.
 - So now you need to replicate your state in multiple places.
 - And you need to worry about these instances getting out of sync.
 
-* Distributed data management is easy, right?
+Any system with more than one container is a distributed system.
+
+* Distributed state management is easy, right?
 
 .image data-management.jpg
 
-* How can we avoid state getting out of sync?
+* Fallacies of distributed computing
+- The network is reliable.
+- Latency is zero.
+- Bandwidth is infinite.
+- The network is secure.
+- Topology doesn't change.
+- There is one administrator.
+- Transport cost is zero.
+- The network is homogeneous.
 
+.caption - Bill Joy, Peter Deutsch et al., 20 years ago
+
+Let's add: Hosts stay up forever.
+
+* How can we avoid state getting out of sync?
 - Only store it in one place
 - Only allow updates in one place, and replicate them
 - Make the nodes come to a consensus over updates
@@ -44,26 +63,23 @@ Software Engineer at Weaveworks
 
 * The cost of consensus
 
-*Performance*: _n_ network round-trips per update.
+*Performance*: multiple network round-trips per update.
 
 *Availability*: updates halt if you cannot contact a majority of nodes
 
-"Network partition is indistinguishable from node failure"
+- "Network partition is indistinguishable from node failure"
 
-* How did Weaveworks come to this realisation?
+.image etcd_raft_consensus.gif 300 _
+.caption [[https://github.com/ongardie/raftscope][RaftScope]]
 
-We have a couple of use-cases where we need things to be consistent
-but we also want the rest of the system to remain available when nodes
-go down or become disconnected.
+* Examine the problem more closely
 
-- IP address allocation
-- DNS
+How important is it that every node is up to date?
+- Service discovery: the instant after one node crashes, the list is out of date
+- IP allocation: most nodes are not interested in every allocation
 
-We allocate an IP address to each container, and these addresses have
-to be unique across the whole network.
-
-We expect developers to have network hosts that come and go -
-e.g. when you close your laptop and head to the cofee house.
+Can we design a data structure where it doesn't matter if some nodes
+are out of date, or if updates arrive out of order?
 
 * Solution: Convergent Replicated Data Type (CRDT)
 
@@ -73,6 +89,9 @@ e.g. when you close your laptop and head to the cofee house.
 - each local update is _monotonic_
 - nodes _merge_ updates from other nodes
 - merge function must be commutative, associative and idempotent
+
+.image aphyr-merge.jpg 300 _
+.caption from [[https://aphyr.com/posts/294-call-me-maybe-cassandra/][Aphyr]]
 
 * CRDT applied to DNS
 
@@ -121,6 +140,8 @@ well-connected sets with narrow links between the two sets.
 
 * Further reading
 
+Call Me Maybe - [[https://aphyr.com]]
+
 Conflict-free replicated data types
 Marc Shapiro, Nuno Preguiça, Carlos Baquero, Marek Zawirski, 2011
 [[http://dl.acm.org/citation.cfm?id=2050642]]
@@ -132,3 +153,19 @@ Mihai Letia, Nuno Preguiça, Marc Shapiro, 2009
 * Credits
 
 "TechCrunch Disrupt" image from HBO's "Silicon Valley"
+
+* How did Weaveworks come to this realisation?
+
+We have a couple of use-cases where we need things to be consistent
+but we also want the rest of the system to remain available when nodes
+go down or become disconnected.
+
+- IP address allocation
+- DNS
+
+We allocate an IP address to each container, and these addresses have
+to be unique across the whole network.
+
+We expect developers to have network hosts that come and go -
+e.g. when you close your laptop and head to the cofee house.
+
