@@ -122,6 +122,8 @@ Each host only ever manipulates its own entries. When one host wants
 to grant some free space to another host, it simply updates one of its
 own entries to point to the other host, and broadcasts an update.
 
+.image ipam.png
+
 * Sidebar: Broadcast and Gossip
 
 - CRDT systems often use _Gossip_ mechanisms to communicate updates.
