@@ -8,23 +8,6 @@ bryan@weave.works
 http://weave.works
 @bboreham
 
-* Who am I?
-
-Software Engineer at Weaveworks
-
-.image ./weave_logo.png
-
-* What do Weaveworks do?
-- Connect, observe and control Docker containers
-- Weave Net: distributed ethernet switch, DNS and IP allocator
-- Weave Scope: distributed container visualisation
-- All written in Go, all Open Source
-
-# We need things to be consistent but we also want the rest of the
-# system to remain available when nodes go down or become
-# disconnected.  And we don't want the overhad of installing a store
-# like Etcd or Postgres
-
 * What am I talking about?
 .image ./paxos.jpg
 .caption "Making the world a better place through Paxos Algorithms"
@@ -81,6 +64,27 @@ How important is it that every node is up to date?
 Can we design a data structure where it doesn't matter if some nodes
 are out of date, or if updates arrive out of order?
 
+* Wht does this matter to Weaveworks?
+_Connect,_observe_and_control_Docker_containers_
+
+We use-cases where we need things to be consistent but we also want
+the rest of the system to remain available when nodes go down or
+become disconnected.
+
+- Service Discovery via DNS
+- IP address allocation
+
+# We allocate an IP address to each container, and these addresses have
+# to be unique across the whole network.
+
+We expect developers to have network hosts that come and go -
+e.g. when you close your laptop and head to the coffee house.
+
+# We need things to be consistent but we also want the rest of the
+# system to remain available when nodes go down or become
+# disconnected.  And we don't want the overhead of installing a store
+# like Etcd or Postgres
+
 * Solution: Convergent Replicated Data Type (CRDT)
 
 # subset of Conflict-Free Replicated Data Type
@@ -90,14 +94,12 @@ are out of date, or if updates arrive out of order?
 - nodes _merge_ updates from other nodes
 - merge function must be commutative, associative and idempotent
 
-.image aphyr-merge.jpg 300 _
-.caption from [[https://aphyr.com/posts/294-call-me-maybe-cassandra/][Aphyr]]
+.image merge.png 320 _
 
 * CRDT applied to DNS
 
 - Data structure is a set of entries mapping `Name` to `Address`.
 - Operations are: `Add` and `Delete`
-- `Delete` is implemented by erecting a _tombstone_ over an entry
 
 Entries also contain the host and container ID, so multiple hosts can
 have an entry for the same name, adding redundancy to the system. This
@@ -106,12 +108,6 @@ then allows round-robin DNS for load-spreading.
 Putting the host ID into the entry means that there is no problem of
 consistency between updates on different hosts - they only ever
 manipulate their own entries.
-
-How do we keep from accumulating an ever-increasing set of tombstoned entries?
-
-- Tombstoned entries time out after a while
-
-Each update sends a broadcast out to other nodes. These messages can get dropped by the network, so there is a periodic gossip mechanism to catch up.
 
 * CRDT applied to IP allocation
 
@@ -136,6 +132,14 @@ well-connected sets with narrow links between the two sets.
 - Weave understands the topology of its interconnects.
 - Weave's gossip implementation skews the random selection of nodes to optimise flow over the topology
 
+* Complications?
+
+- `Delete` is implemented by erecting a _tombstone_ over an entry
+
+- How do we keep from accumulating an ever-increasing set of tombstoned entries?
+
+- Tombstoned entries time out after a while
+
 * Conclusion
 - CRDT can be used to make your distributed system faster and more available
 - Data structure has to be carefully designed to meet the requirements of a CRDT
@@ -155,19 +159,3 @@ Mihai Letia, Nuno Preguiça, Marc Shapiro, 2009
 * Credits
 
 "TechCrunch Disrupt" image from HBO's "Silicon Valley"
-
-* How did Weaveworks come to this realisation?
-
-We have a couple of use-cases where we need things to be consistent
-but we also want the rest of the system to remain available when nodes
-go down or become disconnected.
-
-- IP address allocation
-- DNS
-
-We allocate an IP address to each container, and these addresses have
-to be unique across the whole network.
-
-We expect developers to have network hosts that come and go -
-e.g. when you close your laptop and head to the cofee house.
-
