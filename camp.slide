@@ -4,8 +4,8 @@ Tags: golang, state, consensus
 
 Bryan Boreham
 Software Engineer, Weaveworks
-bryan@weave.works
 http://weave.works
+bryan@weave.works
 @bboreham
 
 * What am I talking about?
@@ -112,13 +112,13 @@ manipulate their own entries.
 * CRDT applied to IP allocation
 
 - Data structure is a ring, mapping IP address segments to hosts
-- Operations are: `Allocate`, `Free`, `Request Space` and `Claim`
+- Operations are: `Allocate`, `Free`, `Request` `Space` and `Claim`
 
 Each host only ever manipulates its own entries. When one host wants
 to grant some free space to another host, it simply updates one of its
 own entries to point to the other host, and broadcasts an update.
 
-.image ipam.png
+.image ipam.png 320 _
 
 * Sidebar: Broadcast and Gossip
 
@@ -134,11 +134,12 @@ well-connected sets with narrow links between the two sets.
 
 * Complications?
 
-- `Delete` is implemented by erecting a _tombstone_ over an entry
-
-- How do we keep from accumulating an ever-increasing set of tombstoned entries?
-
+`Delete` is implemented by erecting a _tombstone_ over an entry
+# How do we keep from accumulating an ever-increasing set of tombstoned entries?
 - Tombstoned entries time out after a while
+
+How to bootstrap the system?
+- We use Paxos
 
 * Conclusion
 - CRDT can be used to make your distributed system faster and more available
@@ -146,7 +147,7 @@ well-connected sets with narrow links between the two sets.
 
 * Further reading
 
-Call Me Maybe - [[https://aphyr.com]]
+"Call Me Maybe" - [[https://aphyr.com]]
 
 Conflict-free replicated data types
 Marc Shapiro, Nuno Preguiça, Carlos Baquero, Marek Zawirski, 2011
@@ -155,7 +156,3 @@ Marc Shapiro, Nuno Preguiça, Carlos Baquero, Marek Zawirski, 2011
 CRDTs: Consistency without concurrency control
 Mihai Letia, Nuno Preguiça, Marc Shapiro, 2009
 [[http://arxiv.org/abs/0907.0929]]
-
-* Credits
-
-"TechCrunch Disrupt" image from HBO's "Silicon Valley"
