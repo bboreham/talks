@@ -1,6 +1,6 @@
-Distributed state management without consensus
-September 2015
-Tags: golang, state, consensus
+We don't need consensus.
+All agreed?
+Tags: distributed state, consensus, CRDT
 
 Bryan Boreham
 Software Engineer, Weaveworks
@@ -73,15 +73,13 @@ We have cases where data should be consistent across the network:
 # We allocate an IP address to each container, and these addresses have
 # to be unique across the whole network.
 
-But we also want the rest of the system to remain available when nodes
-go down or become disconnected.
+We want to support dynamically adding nodes, and we also want the
+system to remain available when nodes go down or become disconnected.
 
 We expect developers to have network hosts that come and go -
 e.g. when you close your laptop and head to the coffee house.
 
-# We need things to be consistent but we also want the rest of the
-# system to remain available when nodes go down or become
-# disconnected.  And we don't want the overhead of installing a store
+#  And we don't want the overhead of installing and managing a store
 # like Etcd or Postgres
 
 * Examine the problem more closely
@@ -143,12 +141,16 @@ e.g. two sets of hosts with narrow links between them.
 # How do we keep from accumulating an ever-increasing set of tombstoned entries?
 - Tombstoned entries time out after a while
 
+Not something you can pull off-the-shelf
+ - Data structure must be carefully designed
+
 How to bootstrap the IP allocator system?
 - We use Paxos
 
 * Conclusion
-- CRDT can be used to make your distributed system faster and more available, if your problem is a good fit
-- Not something you can pull off-the-shelf; data structure must be carefully designed
+- Consensus is less important than you might think.
+- CRDT is a key building-block for eventual consistency.
+- Your system can be faster and more available.
 
 * Further reading
 
