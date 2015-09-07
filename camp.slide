@@ -147,10 +147,10 @@ Not something you can pull off-the-shelf
 How to bootstrap the IP allocator system?
 - We use Paxos
 
-* Conclusion
-- Consensus is less important than you might think.
+* Three rules of thumb
+- Don't force consensus unless you need to
 - CRDT is a key building-block for eventual consistency.
-- Your system can be faster and more available.
+- Take great care!
 
 * Further reading
 
