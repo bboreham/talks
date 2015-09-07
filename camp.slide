@@ -10,10 +10,11 @@ bryan@weave.works
 
 * What am I talking about?
 .image ./paxos.jpg
-.caption "Making the world a better place through Paxos Algorithms"
+.caption "Making the world a better place through Paxos Algorithms for distributed systems"
 
-* No, really!
-It's about reliable systems.
+* Any system with more than one container is a distributed system.
+
+* It's about reliable systems.
 
 - You don't want your system to go down when one component fails.
 - This leads you to run multiple instances,
@@ -47,9 +48,21 @@ Let's add: Hosts stay up forever.
 - Make the nodes come to a consensus over updates
 - Something else?
 
-# At this point, I should say, if you don't want to think too hard
-# about the problem, use something off-the-shelf.  Postgres, etcd,
-# Consul, whatever.  It'll work pretty well, and you'll be fine.
+* Default choice: use something off-the-shelf
+
+There are many great products for distributed state:
+
+- Etcd, Consul, Zookeeper, ...
+
+These all use _consensus_ algorithms like Paxos and Raft.
+
+Consensus algorithms get very complicated, handling:
+
+- lost messages
+- delayed messages
+- crashed hosts
+- network partition
+- adding and removing hosts
 
 * The cost of consensus
 
@@ -82,6 +95,14 @@ e.g. when you close your laptop and head to the coffee house.
 #  And we don't want the overhead of installing and managing a store
 # like Etcd or Postgres
 
+* Algorithms + Data Structures
+
+Paxos, Raft, etc., take an Algorithm-centric approach
+
+I'm going to talk about a Data-Structure-centric approach
+
+(Not to discount the other way, just to give you another viewpoint)
+
 * Examine the problem more closely
 
 How important is it that every node is up to date?
@@ -92,16 +113,19 @@ How important is it that every node is up to date?
 Can we design a data structure where it doesn't matter if some nodes
 are out of date, or if updates arrive out of order?
 
+Instead of consensus, we aim for _eventual_consistency_
+
 * Solution: Convergent Replicated Data Type (CRDT)
 
 # subset of Conflict-Free Replicated Data Type
 
 - maintains consistency without consensus
-- each local update is _monotonic_
 - nodes _merge_ updates from other nodes
-- merge function must be commutative, associative and idempotent
+- merge function must be _commutative_, _associative_ and _idempotent_
 
 .image merge.png 320 _
+
+* CRDTs are Awesome
 
 * CRDT applied to DNS
 
@@ -112,6 +136,10 @@ Data structure is a set of entries mapping `Name` to `Address`.
 - Each host only ever manipulates its own entries.
 
 .image dns.png 300 _
+
+* Measurements
+
+chart of weaveDNS vs SkyDNS
 
 * CRDT applied to IP allocation
 
@@ -149,8 +177,8 @@ How to bootstrap the IP allocator system?
 
 * Three rules of thumb
 - Don't force consensus unless you need to
-- CRDT is a key building-block for eventual consistency.
-- Take great care!
+- CRDTs are an essential part of the toolkit for eventual consistency
+- Take great care when designing distributed systems!
 
 * Further reading
 
