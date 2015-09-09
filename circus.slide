@@ -79,6 +79,12 @@ Consensus algorithms get very complicated, handling:
 
 .image dns_qps.png 500 _
 
+* Test set-up
+
+.image weavescope.png 500 _
+
+.caption Image from [[http://weave.works/scope/][weave Scope]]
+
 * Why does this matter to Weaveworks?
 
 We have cases where data should be consistent across the network:
